@@ -13,7 +13,7 @@ function Users() {
         const token = localStorage.getItem("token");
 
         const { data } = await axios.get(
-          "http://localhost:5000/api/users",
+          "https://YOUR-RENDER-URL.onrender.com/api/users",
           {
             headers: {
               Authorization: `Bearer ${token}`,
