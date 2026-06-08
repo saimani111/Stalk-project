@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://YOUR-RENDER-URL.onrender.com/api/auth";
+const API_URL = "https://stalk-backend-gw09.onrender.com/api/auth";
 
 export const registerUser = async (userData) => {
   const response = await axios.post(

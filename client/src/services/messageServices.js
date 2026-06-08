@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://YOUR-RENDER-URL.onrender.com/api/messages";
+const API_URL = "https://stalk-backend-gw09.onrender.com/api/messages";
 
 export const getMessages = async (userId) => {
   const token = localStorage.getItem("token");
