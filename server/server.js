@@ -23,11 +23,28 @@ const server = http.createServer(app);
 // Store Online Users
 const onlineUsers = new Map();
 
+// CORS Middleware
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://stalk-project.vercel.app",
+    ],
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+
 // Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://stalk-project.vercel.app",
+    ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -35,7 +52,6 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  // User comes online
   socket.on("user_online", (userId) => {
     onlineUsers.set(userId, socket.id);
 
@@ -44,14 +60,12 @@ io.on("connection", (socket) => {
     console.log("Online Users:", [...onlineUsers.keys()]);
   });
 
-  // Send Message
   socket.on("send_message", (data) => {
     console.log("Message Received:", data);
 
     io.emit("receive_message", data);
   });
 
-  // Typing Indicator
   socket.on("typing", () => {
     socket.broadcast.emit("user_typing");
   });
@@ -60,12 +74,10 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("user_stop_typing");
   });
 
-  // Read Receipt
   socket.on("message_seen", () => {
     io.emit("message_seen");
   });
 
-  // User disconnects
   socket.on("disconnect", () => {
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
@@ -79,10 +91,6 @@ io.on("connection", (socket) => {
     console.log("User Disconnected:", socket.id);
   });
 });
-
-// Middleware
-app.use(cors());
-app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
