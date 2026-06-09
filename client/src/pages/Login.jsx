@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../authServices";
 
 function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,6 +22,8 @@ function Login() {
       localStorage.setItem("token", data.token);
 
       alert("Login Successful");
+
+      navigate("/users");
     } catch (err) {
       console.log(err);
       alert("Login Failed");
@@ -33,6 +38,7 @@ function Login() {
         <input
           type="email"
           placeholder="Email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -41,6 +47,7 @@ function Login() {
         <input
           type="password"
           placeholder="Password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
