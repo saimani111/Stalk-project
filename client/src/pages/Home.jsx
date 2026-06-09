@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 function Home() {
+  const navigate = useNavigate();
+
   return (
     <div
       style={{
@@ -24,6 +28,7 @@ function Home() {
 
       <div style={{ marginTop: "40px" }}>
         <button
+          onClick={() => navigate("/login")}
           style={{
             padding: "12px 25px",
             marginRight: "15px",
@@ -36,6 +41,7 @@ function Home() {
         </button>
 
         <button
+          onClick={() => navigate("/register")}
           style={{
             padding: "12px 25px",
             borderRadius: "8px",
