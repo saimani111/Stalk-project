@@ -1,4 +1,4 @@
-const user = require("../models/user");
+const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -31,8 +31,12 @@ const registerUser = async (req, res) => {
       profilePic: user.profilePic,
     });
   } catch (error) {
+    console.error("REGISTER ERROR:", error);
+
     res.status(500).json({
+      success: false,
       message: error.message,
+      stack: error.stack,
     });
   }
 };
@@ -77,8 +81,12 @@ const loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("LOGIN ERROR:", error);
+
     res.status(500).json({
+      success: false,
       message: error.message,
+      stack: error.stack,
     });
   }
 };
