@@ -1,0 +1,17 @@
+name: Keep backend awake
+
+on:
+  schedule:
+    # Render free tier sleeps after ~15 min idle; ping every 10 min
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping health route
+        run: |
+          curl -sS --max-time 90 -o /dev/null -w "%{http_code}\n" \
+            https://stalk-backend-gw09.onrender.com/

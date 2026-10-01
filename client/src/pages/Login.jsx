@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLang } from "../context/LangContext";
 import LangSwitcher from "../components/LangSwitcher";
+import { apiErrorText } from "../services/api";
 import { Lock, Mail, MessageSquare, ArrowRight } from "lucide-react";
 
 function Login() {
@@ -29,7 +30,7 @@ function Login() {
       navigate("/chat");
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.response?.data?.message || "Invalid email or password");
+      setError(apiErrorText(err, "Invalid email or password"));
     } finally {
       setLoading(false);
     }

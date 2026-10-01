@@ -5,6 +5,7 @@ import { useLang } from "../context/LangContext";
 import LangSwitcher from "../components/LangSwitcher";
 import { User, Mail, Lock, Image, MessageSquare, ArrowRight } from "lucide-react";
 import { toast } from "../utils/toast";
+import { apiErrorText } from "../services/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ function Register() {
       navigate("/login");
     } catch (err) {
       console.error("Register Error:", err);
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      setError(apiErrorText(err, "Registration failed. Try again."));
     } finally {
       setLoading(false);
     }

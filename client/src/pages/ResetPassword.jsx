@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { KeyRound, Lock, Mail, ArrowLeft, ShieldCheck } from "lucide-react";
-import { forgotPasswordApi, resetPasswordApi } from "../services/api";
+import { forgotPasswordApi, resetPasswordApi, apiErrorText } from "../services/api";
 import { useLang } from "../context/LangContext";
 import LangSwitcher from "../components/LangSwitcher";
 
@@ -17,14 +17,6 @@ function ResetPassword() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  // The free-tier backend sleeps when idle; a request during wake-up fails with
-  // no HTTP response, which reads very differently from a real server rejection.
-  const errorMessage = (err, fallback) =>
-    err.response?.data?.message ||
-    (err.response
-      ? fallback
-      : "Couldn't reach the server — it may be waking up. Try again in a minute.");
-
   const sendCode = async (e) => {
     e.preventDefault();
     if (!email) {
@@ -38,7 +30,7 @@ function ResetPassword() {
       setNotice(res.message);
       setStep(2);
     } catch (err) {
-      setError(errorMessage(err, "Something went wrong. Try again."));
+      setError(apiErrorText(err, "Something went wrong. Try again."));
     } finally {
       setLoading(false);
     }
@@ -57,7 +49,7 @@ function ResetPassword() {
       setNotice(res.message);
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      setError(errorMessage(err, "Invalid code. Try again."));
+      setError(apiErrorText(err, "Invalid code. Try again."));
     } finally {
       setLoading(false);
     }

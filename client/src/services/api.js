@@ -14,6 +14,14 @@ const API = axios.create({
 export const fileUrl = (url) =>
   !url || url.startsWith("http") ? url : `${BASE_URL}${url}`;
 
+// The free-tier backend sleeps when idle; requests during wake-up fail with no
+// HTTP response, which reads very differently from a real server rejection.
+export const apiErrorText = (err, fallback) =>
+  err.response?.data?.message ||
+  (err.response
+    ? fallback
+    : "Couldn't reach the server — it may be waking up. Try again in a minute.");
+
 // Attach JWT Authorization token to requests automatically
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
