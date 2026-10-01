@@ -31,6 +31,7 @@ async function sendMail({ to, subject, html }) {
     subject,
     html,
   });
+  console.log(`[mail:sent] to=${to} subject="${subject}"`);
   return true;
 }
 
