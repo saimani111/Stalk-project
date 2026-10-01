@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import InstallPrompt from "../components/InstallPrompt";
+import InstallPrompt, { InstallButton } from "../components/InstallPrompt";
 import { MessageSquare, PhoneCall, Users, Mic, Flame, Sparkles, ArrowRight, HeartHandshake } from "lucide-react";
 
 function Home() {
@@ -257,16 +257,18 @@ function Home() {
           </button>
         </div>
 
+        <InstallButton />
+
         {/* Feature Cards Grid */}
         <div
           style={{
             marginTop: "70px",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
             gap: "24px",
             maxWidth: "1150px",
             width: "100%",
           }}
+          className="feature-grid"
         >
           {[
             {
@@ -282,6 +284,7 @@ function Home() {
           ].map((item, idx) => (
             <div
               key={idx}
+              className={item.highlight ? "feature-card--wide" : undefined}
               style={{
                 background: item.highlight ? "linear-gradient(160deg, #1c1206 0%, #121212 60%)" : "#121212",
                 border: item.highlight ? "1px solid rgba(245, 158, 11, 0.5)" : "1px solid #27272a",
@@ -289,7 +292,6 @@ function Home() {
                 padding: "24px",
                 textAlign: "left",
                 boxShadow: item.highlight ? "0 8px 30px rgba(245, 158, 11, 0.15)" : "0 4px 12px rgba(0,0,0,0.5)",
-                gridColumn: item.highlight ? "span 2" : undefined,
               }}
             >
               <div style={{ marginBottom: "12px" }}>{item.icon}</div>

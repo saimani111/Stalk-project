@@ -233,6 +233,26 @@ img {
   }
 }
 
+/* ============ Home Feature Grid ============ */
+.feature-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .feature-card--wide {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* ============ Reduced Motion ============ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

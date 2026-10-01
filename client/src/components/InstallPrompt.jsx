@@ -3,13 +3,14 @@ import { Download, X } from "lucide-react";
 
 const DISMISS_KEY = "stalk:installDismissed";
 
-const isIOS = () =>
-  /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 const isStandalone = () =>
   window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
-// Chrome/Edge fire beforeinstallprompt; iOS Safari never does — show manual hint instead
+// Chrome/Edge fire beforeinstallprompt (captured early in main.jsx);
+// iOS Safari and in-app browsers never do — show manual hints instead.
+
 export default function InstallPrompt() {
   const [deferred, setDeferred] = useState(null);
   const [showIosHint, setShowIosHint] = useState(false);
@@ -17,13 +18,13 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     if (isStandalone() || dismissed) return;
-    const onPrompt = (e) => {
-      e.preventDefault();
-      setDeferred(e);
+    const take = () => {
+      if (window.__stalkBip) setDeferred(window.__stalkBip);
     };
-    window.addEventListener("beforeinstallprompt", onPrompt);
+    take();
+    window.addEventListener("stalk-install-available", take);
     if (isIOS()) setShowIosHint(true);
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    return () => window.removeEventListener("stalk-install-available", take);
   }, [dismissed]);
 
   const hide = () => {
@@ -37,6 +38,7 @@ export default function InstallPrompt() {
     if (!deferred) return;
     deferred.prompt();
     await deferred.userChoice;
+    window.__stalkBip = null;
     setDeferred(null);
   };
 
@@ -102,6 +104,72 @@ export default function InstallPrompt() {
       >
         <X size={15} />
       </button>
+    </div>
+  );
+}
+
+// Visible "Install App" button for the landing page: one-tap when Chrome
+// allows it, step-by-step instructions otherwise (iOS / in-app browsers).
+export function InstallButton() {
+  const [canPrompt, setCanPrompt] = useState(() => !!window.__stalkBip);
+  const [installed, setInstalled] = useState(isStandalone);
+  const [showSteps, setShowSteps] = useState(false);
+
+  useEffect(() => {
+    const onAvailable = () => setCanPrompt(true);
+    const onInstalled = () => {
+      setInstalled(true);
+      window.__stalkBip = null;
+    };
+    window.addEventListener("stalk-install-available", onAvailable);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("stalk-install-available", onAvailable);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  if (installed) return null;
+
+  const click = async () => {
+    const ev = window.__stalkBip;
+    if (ev) {
+      ev.prompt();
+      await ev.userChoice;
+      window.__stalkBip = null;
+      setCanPrompt(false);
+      return;
+    }
+    setShowSteps((v) => !v);
+  };
+
+  return (
+    <div style={{ marginTop: "22px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+      <button
+        onClick={click}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "10px 22px",
+          borderRadius: "999px",
+          background: "transparent",
+          border: "1px solid #3f3f46",
+          color: "#a1a1aa",
+          fontSize: "14px",
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        <Download size={15} /> {canPrompt ? "Install Stalk App" : "How to install on your phone"}
+      </button>
+      {showSteps && (
+        <p style={{ maxWidth: "420px", margin: 0, fontSize: "13px", lineHeight: 1.6, color: "#71717a" }}>
+          {isIOS()
+            ? "Open this page in Safari → tap the Share button → \"Add to Home Screen\" → Add."
+            : "Open this page in Chrome (not WhatsApp's browser — tap ⋮ at the top right, then \"Open in browser\") → tap the ⋮ menu → \"Add to Home screen\" / \"Install app\"."}
+        </p>
+      )}
     </div>
   );
 }
