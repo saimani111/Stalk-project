@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -853,27 +853,35 @@ function Chat() {
   };
 
   // Filtered and sorted lists for search (WhatsApp-style: newest activity on top)
-  const sortedUsers = [...users]
-    .filter((u) => u.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      const timeA = new Date(conversationsMeta[String(a._id)]?.timestamp || 0).getTime();
-      const timeB = new Date(conversationsMeta[String(b._id)]?.timestamp || 0).getTime();
-      return timeB - timeA;
-    });
+  const sortedUsers = useMemo(
+    () =>
+      [...users]
+        .filter((u) => u.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => {
+          const timeA = new Date(conversationsMeta[String(a._id)]?.timestamp || 0).getTime();
+          const timeB = new Date(conversationsMeta[String(b._id)]?.timestamp || 0).getTime();
+          return timeB - timeA;
+        }),
+    [users, searchQuery, conversationsMeta]
+  );
 
-  const sortedGroups = [...groups]
-    .filter((g) => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      const timeA = new Date(conversationsMeta[String(a._id)]?.timestamp || 0).getTime();
-      const timeB = new Date(conversationsMeta[String(b._id)]?.timestamp || 0).getTime();
-      return timeB - timeA;
-    });
+  const sortedGroups = useMemo(
+    () =>
+      [...groups]
+        .filter((g) => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => {
+          const timeA = new Date(conversationsMeta[String(a._id)]?.timestamp || 0).getTime();
+          const timeB = new Date(conversationsMeta[String(b._id)]?.timestamp || 0).getTime();
+          return timeB - timeA;
+        }),
+    [groups, searchQuery, conversationsMeta]
+  );
 
   return (
     <div
       style={{
         display: "flex",
-        height: "100vh",
+        height: "100dvh",
         width: "100vw",
         backgroundColor: "#0a0a0a",
         color: "#f8fafc",
@@ -1823,16 +1831,17 @@ function Chat() {
 
       {/* MAIN ACTIVE CHAT AREA - SLEEK OBSIDIAN & RED */}
       {activeChat ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#080809" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", background: "#080809" }}>
           {/* Chat Header */}
           <div
             style={{
-              padding: "16px 24px",
+              padding: isMobile ? "10px 12px" : "16px 24px",
               background: "#111113",
               borderBottom: "1px solid #27272a",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: "8px",
             }}
           >
             <div
@@ -1840,6 +1849,8 @@ function Chat() {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
+                flex: 1,
+                minWidth: 0,
                 cursor: activeChat.type === "group" ? "pointer" : "default",
               }}
               onClick={() => {
@@ -1910,9 +1921,9 @@ function Chat() {
                       }}
                     />
                   </div>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#ffffff" }}>{activeChat.data.name}</h3>
+                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#ffffff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeChat.data.name}</h3>
                       {ghostMode && (
                         <span
                           style={{
@@ -1966,7 +1977,7 @@ function Chat() {
             </div>
 
             {/* Chat Action Buttons (Search, Audio, Video) */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: isMobile ? "6px" : "10px", alignItems: "center", flexShrink: 0 }}>
               <button
                 onClick={() => setShowInChatSearch((prev) => !prev)}
                 style={{
@@ -2089,7 +2100,7 @@ function Chat() {
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "24px",
+              padding: isMobile ? "12px" : "24px",
               display: "flex",
               flexDirection: "column",
               gap: "16px",
@@ -2519,12 +2530,12 @@ function Chat() {
           {/* Chat Footer Input Area - RED & BLACK */}
           <div
             style={{
-              padding: "16px 24px",
+              padding: isMobile ? "10px 12px calc(10px + env(safe-area-inset-bottom))" : "16px 24px",
               background: "#111113",
               borderTop: "1px solid #27272a",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
+              gap: isMobile ? "8px" : "12px",
             }}
           >
             {/* File Attachment Hidden Input */}
@@ -2615,6 +2626,7 @@ function Chat() {
                   }}
                   style={{
                     flex: 1,
+                    minWidth: 0,
                     padding: "13px 18px",
                     borderRadius: "14px",
                     background: "#0a0a0a",

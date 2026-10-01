@@ -21,6 +21,8 @@ const MIME_EXT = {
   "image/webp": ".webp",
   "image/bmp": ".bmp",
   "image/avif": ".avif",
+  "image/heic": ".heic",
+  "image/heif": ".heif",
   "audio/mpeg": ".mp3",
   "audio/wav": ".wav",
   "audio/ogg": ".ogg",
@@ -62,6 +64,8 @@ const ALLOWED_MIMETYPES = new Set([
   "image/webp",
   "image/bmp",
   "image/avif",
+  "image/heic",
+  "image/heif",
   // Audio
   "audio/mpeg",
   "audio/wav",

@@ -10,6 +10,10 @@ const API = axios.create({
   baseURL: `${BASE_URL}/api`,
 });
 
+// Resolve server-relative upload URLs (e.g. /uploads/x.png) against the API host
+export const fileUrl = (url) =>
+  !url || url.startsWith("http") ? url : `${BASE_URL}${url}`;
+
 // Attach JWT Authorization token to requests automatically
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -127,6 +131,8 @@ export const uploadFileApi = async (file) => {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    // generous: Render free-tier cold starts can take ~50s
+    timeout: 120000,
   });
   return response.data;
 };

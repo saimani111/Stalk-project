@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Eye, Trash2 } from "lucide-react";
-import { viewStatusApi, deleteStatusApi } from "../services/api";
+import { viewStatusApi, deleteStatusApi, fileUrl } from "../services/api";
 
 const STORY_DURATION_MS = 5000;
 
@@ -282,7 +282,7 @@ const StatusViewerModal = ({
           {/* Media or Text Content */}
           {currentStory?.mediaUrl ? (
             <img
-              src={currentStory.mediaUrl}
+              src={fileUrl(currentStory.mediaUrl)}
               alt="Status"
               style={{
                 width: "100%",

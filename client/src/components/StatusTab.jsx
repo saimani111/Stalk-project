@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Plus, Clock } from "lucide-react";
 import { getStatusesApi } from "../services/api";
+import { toast } from "../utils/toast";
 
 const CreateStatusModal = lazy(() => import("./CreateStatusModal"));
 const StatusViewerModal = lazy(() => import("./StatusViewerModal"));
@@ -18,6 +19,7 @@ const StatusTab = ({ currentUser, socket, ghostMode }) => {
       setStatusGroups(data);
     } catch (err) {
       console.error("Failed to load statuses:", err);
+      toast.error("Couldn't load statuses. The server may be waking up — pull to retry.");
     } finally {
       setLoading(false);
     }
