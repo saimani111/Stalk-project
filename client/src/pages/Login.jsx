@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLang } from "../context/LangContext";
+import LangSwitcher from "../components/LangSwitcher";
 import { Lock, Mail, MessageSquare, ArrowRight } from "lucide-react";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLang();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +18,7 @@ function Login() {
   const submitHandler = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError(t("fill_fields"));
       return;
     }
 
@@ -56,6 +59,9 @@ function Login() {
         }}
       >
         {/* Brand Header */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+          <LangSwitcher compact />
+        </div>
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div
             style={{
@@ -73,10 +79,10 @@ function Login() {
             <MessageSquare size={28} style={{ color: "white" }} />
           </div>
           <h2 style={{ margin: "0 0 8px 0", fontSize: "28px", fontWeight: "700" }}>
-            Welcome Back
+            {t("welcome_back")}
           </h2>
           <p style={{ margin: 0, color: "#a1a1aa", fontSize: "14px" }}>
-            Sign in to continue to Stalk Real-Time Chat
+            {t("signin_sub")}
           </p>
         </div>
 
@@ -100,7 +106,7 @@ function Login() {
         <form onSubmit={submitHandler}>
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", fontSize: "13px", color: "#a1a1aa", marginBottom: "8px" }}>
-              Email Address
+              {t("email")}
             </label>
             <div
               style={{
@@ -132,9 +138,14 @@ function Login() {
           </div>
 
           <div style={{ marginBottom: "28px" }}>
-            <label style={{ display: "block", fontSize: "13px", color: "#a1a1aa", marginBottom: "8px" }}>
-              Password
-            </label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <label style={{ fontSize: "13px", color: "#a1a1aa" }}>
+                {t("password")}
+              </label>
+              <Link to="/reset-password" style={{ fontSize: "13px", color: "#ef4444", textDecoration: "none", fontWeight: "600" }}>
+                {t("forgot_password")}
+              </Link>
+            </div>
             <div
               style={{
                 display: "flex",
@@ -185,15 +196,15 @@ function Login() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? t("signing_in") : t("sign_in")}
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>
 
         <p style={{ marginTop: "24px", textAlign: "center", color: "#a1a1aa", fontSize: "14px" }}>
-          Don't have an account?{" "}
+          {t("no_account")}{" "}
           <Link to="/register" style={{ color: "#ef4444", textDecoration: "none", fontWeight: "600" }}>
-            Register here
+            {t("register_here")}
           </Link>
         </p>
       </div>

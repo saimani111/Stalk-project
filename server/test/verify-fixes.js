@@ -206,13 +206,65 @@ async function main() {
   });
   check("SEC7 message length capped", huge.status >= 400, `status=${huge.status}`);
 
-  // ---------- Fix 2b: speak endpoint 501 when clone unconfigured (client fallback trigger) ----------
+  // ---------- ai/speak endpoint ----------
   const speak = await fetch(`${BASE}/ai/speak`, {
     method: "POST",
     headers: auth(alice.token),
     body: JSON.stringify({ text: "hello" }),
   });
   check("ai/speak returns 501 when voice clone unset", speak.status === 501);
+
+  // ---------- OTP1-6: forgot-password / reset-password flow ----------
+  const fpUnknown = await fetch(`${BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "ghost-user@nowhere.com" }),
+  });
+  const fpUnknownJson = await fpUnknown.json();
+  check("OTP1 unknown email → generic response, no code", fpUnknown.status === 200 && !fpUnknownJson.devCode);
+
+  const carlEmail = `stunytest-carl-${stamp}@example.com`;
+  await fetch(`${BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "stunytest-carl", email: carlEmail, password: "testpass123" }),
+  });
+  const fp = await fetch(`${BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: carlEmail }),
+  });
+  const fpJson = await fp.json();
+  check("OTP2 code issued for registered email", fp.status === 200 && /^\d{6}$/.test(fpJson.devCode || ""), `devCode=${fpJson.devCode ? "present" : "missing (is SMTP configured / NODE_ENV production?)"}`);
+
+  const badReset = await fetch(`${BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: carlEmail, code: "000000", newPassword: "newpass123" }),
+  });
+  check("OTP3 wrong code rejected", badReset.status === 400);
+
+  const goodReset = await fetch(`${BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: carlEmail, code: fpJson.devCode, newPassword: "newpass123" }),
+  });
+  check("OTP4 reset with valid code succeeds", goodReset.status === 200);
+
+  const reLogin = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: carlEmail, password: "newpass123" }),
+  });
+  const reLoginJson = await reLogin.json().catch(() => ({}));
+  check("OTP5 login works with new password", reLogin.status === 200 && !!reLoginJson.token);
+
+  const reuse = await fetch(`${BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: carlEmail, code: fpJson.devCode, newPassword: "again123" }),
+  });
+  check("OTP6 code is single-use", reuse.status === 400);
 
   console.log("\n================ VERIFICATION RESULTS ================");
   results.forEach((r) => console.log(r));

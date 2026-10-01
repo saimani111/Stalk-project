@@ -39,6 +39,16 @@ export const getProfile = async () => {
   return response.data;
 };
 
+export const forgotPasswordApi = async (email) => {
+  const response = await API.post("/auth/forgot-password", { email });
+  return response.data;
+};
+
+export const resetPasswordApi = async (email, code, newPassword) => {
+  const response = await API.post("/auth/reset-password", { email, code, newPassword });
+  return response.data;
+};
+
 // User Services
 export const getAllUsers = async () => {
   const response = await API.get("/users");

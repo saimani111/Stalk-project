@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
+import { LangProvider } from "./context/LangContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ToastContainer from "./components/ToastContainer";
 
@@ -11,6 +12,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Assistant = lazy(() => import("./pages/Assistant"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 function PageLoader() {
   return (
@@ -23,27 +25,30 @@ function PageLoader() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <SocketProvider>
-          <BrowserRouter>
-            <ToastContainer />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/profile" element={<Profile />} />
+      <LangProvider>
+        <AuthProvider>
+          <SocketProvider>
+            <BrowserRouter>
+              <ToastContainer />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/profile" element={<Profile />} />
 
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/chat/:userId" element={<Chat />} />
-                <Route path="/assistant" element={<Assistant />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/chat/:userId" element={<Chat />} />
+                  <Route path="/assistant" element={<Assistant />} />
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </SocketProvider>
-      </AuthProvider>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </SocketProvider>
+        </AuthProvider>
+      </LangProvider>
     </ErrorBoundary>
   );
 }

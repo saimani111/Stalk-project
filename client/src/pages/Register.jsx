@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLang } from "../context/LangContext";
+import LangSwitcher from "../components/LangSwitcher";
 import { User, Mail, Lock, Image, MessageSquare, ArrowRight } from "lucide-react";
 import { toast } from "../utils/toast";
 
 function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { t } = useLang();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -59,6 +62,9 @@ function Register() {
           boxShadow: "0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px rgba(220, 38, 38, 0.15)",
         }}
       >
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+          <LangSwitcher compact />
+        </div>
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <div
             style={{
@@ -76,10 +82,10 @@ function Register() {
             <MessageSquare size={28} style={{ color: "white" }} />
           </div>
           <h2 style={{ margin: "0 0 8px 0", fontSize: "28px", fontWeight: "700" }}>
-            Create Account
+            {t("create_account")}
           </h2>
           <p style={{ margin: 0, color: "#a1a1aa", fontSize: "14px" }}>
-            Join Stalk to chat, call, and connect in real time
+            {t("register_sub")}
           </p>
         </div>
 
@@ -103,7 +109,7 @@ function Register() {
         <form onSubmit={submitHandler}>
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", fontSize: "13px", color: "#a1a1aa", marginBottom: "6px" }}>
-              Full Name *
+              {t("name")} *
             </label>
             <div
               style={{
@@ -136,7 +142,7 @@ function Register() {
 
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", fontSize: "13px", color: "#a1a1aa", marginBottom: "6px" }}>
-              Email Address *
+              {t("email")} *
             </label>
             <div
               style={{
@@ -169,7 +175,7 @@ function Register() {
 
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", fontSize: "13px", color: "#a1a1aa", marginBottom: "6px" }}>
-              Password *
+              {t("password")} *
             </label>
             <div
               style={{
@@ -254,15 +260,15 @@ function Register() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Creating Account..." : "Register"}
+            {loading ? t("creating") : t("create_account_btn")}
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>
 
         <p style={{ marginTop: "24px", textAlign: "center", color: "#a1a1aa", fontSize: "14px" }}>
-          Already have an account?{" "}
+          {t("already_have")}{" "}
           <Link to="/login" style={{ color: "#ef4444", textDecoration: "none", fontWeight: "600" }}>
-            Log in here
+            {t("login_here")}
           </Link>
         </p>
       </div>

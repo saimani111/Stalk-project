@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLang } from "../context/LangContext";
+import LangSwitcher from "../components/LangSwitcher";
 import InstallPrompt, { InstallButton } from "../components/InstallPrompt";
 import { MessageSquare, PhoneCall, Users, Mic, Flame, Sparkles, ArrowRight, HeartHandshake } from "lucide-react";
 
 function Home() {
   const navigate = useNavigate();
   const auth = useAuth();
+  const { t } = useLang();
   const user = auth?.user;
 
   return (
@@ -52,6 +55,7 @@ function Home() {
         </div>
 
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <LangSwitcher compact />
           {user ? (
             <>
               <button
@@ -104,7 +108,7 @@ function Home() {
                   fontWeight: "500",
                 }}
               >
-                Login
+                {t("login")}
               </button>
               <button
                 onClick={() => navigate("/register")}
@@ -119,7 +123,7 @@ function Home() {
                   boxShadow: "0 4px 14px rgba(239, 68, 68, 0.4)",
                 }}
               >
-                Get Started
+                {t("get_started")}
               </button>
             </>
           )}
@@ -187,7 +191,7 @@ function Home() {
             marginBottom: "24px",
           }}
         >
-          <HeartHandshake size={16} /> Meet Stuny — your AI wellness companion
+          <HeartHandshake size={16} /> {t("meet_stuny")}
         </div>
 
         <h1
@@ -199,7 +203,7 @@ function Home() {
             margin: "0 0 24px 0",
           }}
         >
-          Talk to Stuny.{" "}
+          {t("hero_title_1")}{" "}
           <span
             style={{
               background: "linear-gradient(135deg, #fbbf24, #ef4444)",
@@ -208,13 +212,12 @@ function Home() {
               color: "transparent",
             }}
           >
-            Watch your problems dissolve.
+            {t("hero_title_2")}
           </span>
         </h1>
 
         <p style={{ fontSize: "clamp(1rem, 2.5vw, 1.2rem)", maxWidth: "680px", color: "#a1a1aa", lineHeight: 1.6, margin: "0 0 40px 0" }}>
-          Stuny listens without judgement, calms your mind, and lifts you up — out loud, like a real friend.
-          And when you're ready, chat, call and share moments with the people you love.
+          {t("hero_desc")}
         </p>
 
         <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }}>
@@ -235,7 +238,7 @@ function Home() {
               gap: "10px",
             }}
           >
-            <Sparkles size={20} /> Talk to Stuny Free <ArrowRight size={20} />
+            <Sparkles size={20} /> {t("cta_stuny")} <ArrowRight size={20} />
           </button>
           <button
             onClick={() => navigate(user ? "/chat" : "/register")}
@@ -253,7 +256,7 @@ function Home() {
               gap: "10px",
             }}
           >
-            <Users size={18} /> Chat & Call Friends
+            <Users size={18} /> {t("cta_friends")}
           </button>
         </div>
 
@@ -302,7 +305,7 @@ function Home() {
         </div>
 
         <p style={{ marginTop: "50px", fontSize: "13px", color: "#52525b" }}>
-          Stuny is a supportive companion, not a therapist or medical professional.
+          {t("disclaimer")}
         </p>
       </main>
 

@@ -24,6 +24,8 @@ import {
   User as UserIcon,
   X,
 } from "lucide-react";
+import { Languages } from "lucide-react";
+import LangSwitcher from "../components/LangSwitcher";
 
 function Profile() {
   const { user, setUser, logout } = useAuth();
@@ -327,6 +329,26 @@ function Profile() {
               <div style={{ fontSize: "14px" }}>Password protected</div>
             </div>
           </div>
+        </div>
+
+        {/* Language Settings */}
+        <div
+          style={{
+            background: "#0a0a0a",
+            border: "1px solid #27272a",
+            borderRadius: "14px",
+            padding: "16px",
+            marginBottom: "24px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <Languages size={16} style={{ color: "#ef4444" }} />
+            <span style={{ fontSize: "14px", fontWeight: 700 }}>Language / भाषा / భాష</span>
+          </div>
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: "#71717a" }}>
+            Choose your preferred app language.
+          </p>
+          <LangSwitcher />
         </div>
 
         {/* Chat Wallpaper Settings */}
