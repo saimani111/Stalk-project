@@ -140,7 +140,7 @@ function Home() {
             }}
           />
           <img
-            src="/app-icon.png"
+            src="/hero-art.png"
             alt="Stuny, the AI companion"
             style={{
               position: "relative",
