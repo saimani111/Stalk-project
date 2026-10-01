@@ -90,10 +90,39 @@ const ALLOWED_MIMETYPES = new Set([
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ]);
 
+// WhatsApp's in-app browser and some Android pickers send every file as
+// application/octet-stream — recover the real type from the extension
+const EXT_MIME = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".bmp": "image/bmp",
+  ".avif": "image/avif",
+  ".heic": "image/heic",
+  ".heif": "image/heif",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
+  ".aac": "audio/aac",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain",
+  ".zip": "application/zip",
+};
+
 const upload = multer({
   storage,
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
   fileFilter: (req, file, cb) => {
+    if (!file.mimetype || file.mimetype === "application/octet-stream") {
+      const guessed = EXT_MIME[path.extname(file.originalname || "").toLowerCase()];
+      if (guessed) file.mimetype = guessed;
+    }
     if (ALLOWED_MIMETYPES.has(file.mimetype)) {
       cb(null, true);
     } else {
@@ -102,8 +131,16 @@ const upload = multer({
   },
 });
 
+// Multer filter errors arrive as callback errors, not route exceptions —
+// surface them as 400s so the client shows a real message
+const uploadSingle = (req, res, next) =>
+  upload.single("file")(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message || "Upload failed" });
+    next();
+  });
+
 // Upload File Endpoint
-router.post("/", protect, upload.single("file"), (req, res) => {
+router.post("/", protect, uploadSingle, (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });

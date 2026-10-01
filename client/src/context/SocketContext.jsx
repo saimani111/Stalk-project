@@ -118,8 +118,11 @@ export const SocketProvider = ({ children }) => {
   const initLocalStream = async (type = "video") => {
     try {
       const constraints = {
-        audio: true,
-        video: type === "video" ? { width: 640, height: 480 } : false,
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video:
+          type === "video"
+            ? { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 }, facingMode: "user" }
+            : false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;

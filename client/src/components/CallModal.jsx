@@ -41,8 +41,7 @@ const CallModal = () => {
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.88)",
-        backdropFilter: "blur(12px)",
+        backgroundColor: "rgba(0, 0, 0, 0.92)",
         zIndex: 9999,
         display: "flex",
         alignItems: "center",
@@ -92,6 +91,7 @@ const CallModal = () => {
           <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
             <button
               onClick={rejectCall}
+              className="call-btn"
               style={{
                 width: "56px",
                 height: "56px",
@@ -103,7 +103,6 @@ const CallModal = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "transform 0.2s",
               }}
               title="Decline Call"
             >
@@ -111,6 +110,7 @@ const CallModal = () => {
             </button>
             <button
               onClick={answerCall}
+              className="call-btn"
               style={{
                 width: "56px",
                 height: "56px",
@@ -122,7 +122,6 @@ const CallModal = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "transform 0.2s",
                 boxShadow: "0 0 15px rgba(34, 197, 94, 0.5)",
               }}
               title="Accept Call"
@@ -230,7 +229,7 @@ const CallModal = () => {
           {/* Call Controls Bar */}
           <div
             style={{
-              padding: "16px 24px",
+              padding: "16px 24px calc(16px + env(safe-area-inset-bottom))",
               background: "#111113",
               borderTop: "1px solid #27272a",
               display: "flex",
@@ -241,9 +240,10 @@ const CallModal = () => {
           >
             <button
               onClick={toggleMic}
+              className="call-btn"
               style={{
-                width: "48px",
-                height: "48px",
+                width: "52px",
+                height: "52px",
                 borderRadius: "50%",
                 background: micMuted ? "#ef4444" : "#1c1917",
                 border: "1px solid #27272a",
@@ -261,9 +261,10 @@ const CallModal = () => {
             {callType === "video" && (
               <button
                 onClick={toggleCamera}
+                className="call-btn"
                 style={{
-                  width: "48px",
-                  height: "48px",
+                  width: "52px",
+                  height: "52px",
                   borderRadius: "50%",
                   background: cameraOff ? "#ef4444" : "#1c1917",
                   border: "1px solid #27272a",
@@ -281,9 +282,10 @@ const CallModal = () => {
 
             <button
               onClick={endCall}
+              className="call-btn"
               style={{
-                width: "56px",
-                height: "56px",
+                width: "60px",
+                height: "60px",
                 borderRadius: "50%",
                 background: "#dc2626",
                 border: "none",
