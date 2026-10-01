@@ -12,9 +12,17 @@ server/.env
 dist/
 build/
 
+# runtime uploads (user media stored on disk)
+server/uploads/
+
+# local assets & tool scratch (contain personal images / agent files)
+vibe_images/
+.qoder/
+
 # logs
 *.log
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini

@@ -22,6 +22,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
+
+    // What Stuny (AI companion) remembers about this user
+    stunyMemory: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

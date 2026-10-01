@@ -7,6 +7,13 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, profilePic } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email and password are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -34,9 +41,7 @@ const registerUser = async (req, res) => {
     console.error("REGISTER ERROR:", error);
 
     res.status(500).json({
-      success: false,
-      message: error.message,
-      stack: error.stack,
+      message: "Server error during registration",
     });
   }
 };
@@ -46,11 +51,15 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
-        message: "User not found",
+        message: "Invalid email or password",
       });
     }
 
@@ -61,7 +70,7 @@ const loginUser = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
     }
 
@@ -84,9 +93,7 @@ const loginUser = async (req, res) => {
     console.error("LOGIN ERROR:", error);
 
     res.status(500).json({
-      success: false,
-      message: error.message,
-      stack: error.stack,
+      message: "Server error during login",
     });
   }
 };
