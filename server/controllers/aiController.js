@@ -280,4 +280,17 @@ const speak = async (req, res) => {
   }
 };
 
-module.exports = { askAssistant, speak };
+// GET /api/ai/status — deployment diagnostics. Booleans only, never key values.
+const aiStatus = (req, res) => {
+  res.json({
+    providers: {
+      gemini: !!process.env.GEMINI_API_KEY,
+      groq: !!process.env.GROQ_API_KEY,
+      openai: !!process.env.OPENAI_API_KEY,
+    },
+    smtp: !!process.env.SMTP_HOST,
+    dailyLimit: DAILY_LIMIT,
+  });
+};
+
+module.exports = { askAssistant, speak, aiStatus };
