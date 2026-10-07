@@ -61,6 +61,34 @@ async function askOpenAI(systemPrompt, messages) {
   return data.choices?.[0]?.message?.content;
 }
 
+// Google Gemini free tier — better quality than the no-key fallback, ₹0 cost.
+async function askGemini(systemPrompt, messages, maxTokens = 400) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${
+      process.env.GEMINI_MODEL || "gemini-2.0-flash"
+    }:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: messages.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.8 },
+      }),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Gemini error ${res.status}: ${text.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || null;
+}
+
 // Free fallback provider (no API key required)
 async function askPollinations(systemPrompt, messages, maxTokens = 400) {
   const res = await fetch("https://text.pollinations.ai/openai", {
@@ -83,18 +111,24 @@ async function askPollinations(systemPrompt, messages, maxTokens = 400) {
 }
 
 async function generate(messages, systemPrompt) {
-  let reply = null;
-  let provider = "pollinations";
-  if (process.env.OPENAI_API_KEY) {
+  // Preference order: free-tier Gemini first (₹0), paid OpenAI only as backup,
+  // no-key Pollinations as last resort.
+  const chain = [];
+  if (process.env.GEMINI_API_KEY) chain.push(["gemini", askGemini]);
+  if (process.env.OPENAI_API_KEY) chain.push(["openai", askOpenAI]);
+  chain.push(["pollinations", askPollinations]);
+
+  let lastErr = null;
+  for (const [name, fn] of chain) {
     try {
-      reply = await askOpenAI(systemPrompt, messages);
-      provider = "openai";
+      const reply = await fn(systemPrompt, messages);
+      if (reply) return { reply, provider: name };
     } catch (err) {
-      console.warn("OpenAI failed, falling back to free provider:", err.message);
+      lastErr = err;
+      console.warn(`${name} failed, trying next provider:`, err.message);
     }
   }
-  if (!reply) reply = await askPollinations(systemPrompt, messages);
-  return { reply, provider };
+  throw lastErr || new Error("No AI provider returned an answer");
 }
 
 // Fire-and-forget: distill the conversation into Stuny's memory of this user.
@@ -107,7 +141,7 @@ async function refreshMemory(user, messages) {
       .slice(-8)
       .map((m) => `${m.role === "user" ? user.name : "Stuny"}: ${m.content}`)
       .join("\n");
-    const updated = await askPollinations(
+    const updated = await (process.env.GEMINI_API_KEY ? askGemini : askPollinations)(
       MEMORY_PROMPT,
       [
         {
@@ -125,12 +159,32 @@ async function refreshMemory(user, messages) {
   }
 }
 
+// Per-user daily chat cap (abuse/cost guard). In-memory: a redeploy resets it,
+// which is fine for a free tier. Sweeps stale days on each check.
+const DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 150);
+const aiUsage = new Map();
+
+function overDailyLimit(userId) {
+  const today = new Date().toISOString().slice(0, 10);
+  for (const key of aiUsage.keys()) {
+    if (!key.startsWith(`${today}|`)) aiUsage.delete(key);
+  }
+  const count = (aiUsage.get(`${today}|${userId}`) || 0) + 1;
+  aiUsage.set(`${today}|${userId}`, count);
+  return count > DAILY_LIMIT;
+}
+
 // POST /api/ai/chat  { messages: [{role, content}] }
 const askAssistant = async (req, res) => {
   try {
     const messages = sanitizeMessages(req.body.messages);
     if (!messages) {
       return res.status(400).json({ message: "messages array with user/assistant content is required" });
+    }
+    if (overDailyLimit(String(req.user?._id || "anon"))) {
+      return res.status(429).json({
+        message: `You've used all ${DAILY_LIMIT} Stuny chats for today — he'll be back tomorrow. Until then, maybe message a friend?`,
+      });
     }
 
     const memory = req.user?.stunyMemory
