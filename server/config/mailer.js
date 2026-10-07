@@ -1,29 +1,64 @@
 const nodemailer = require("nodemailer");
+const net = require("net");
+const { promises: dns } = require("dns");
 
-let transporter = null;
+// Transports cached per resolved host so an SMTP connection pool is reused.
+const transports = new Map();
 // Outcome of the most recent send attempt, exposed via /api/ai/status so SMTP
 // health can be verified without dashboard log access.
 let lastMailResult = null;
 
+// Render free tier has no IPv6 egress and nodemailer dials a random address from
+// the resolved pool, so sends intermittently died with ENETUNREACH on Gmail's
+// AAAA record. Resolving to an IPv4 literal keeps the connect on IPv4.
+async function resolveIPv4(host) {
+  let timer;
+  try {
+    const lookup = dns.lookup(host, { family: 4 }).then(r => r.address);
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("DNS lookup timed out")), 5000);
+      timer.unref();
+    });
+    return await Promise.race([lookup, timeout]);
+  } catch {
+    return host;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // Gmail: create an App Password at https://myaccount.google.com/apppasswords
 // then set SMTP_HOST=smtp.gmail.com SMTP_PORT=465 SMTP_USER=you@gmail.com SMTP_PASS=xxxx
-function getTransporter() {
-  if (transporter) return transporter;
+function isConfigured() {
   const { SMTP_HOST, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: Number(process.env.SMTP_PORT || 465) !== 587,
+  return !!(SMTP_HOST && SMTP_USER && SMTP_PASS);
+}
+
+async function getTransporter() {
+  if (!isConfigured()) return null;
+  const { SMTP_HOST, SMTP_USER, SMTP_PASS } = process.env;
+  const host = net.isIP(SMTP_HOST) ? SMTP_HOST : await resolveIPv4(SMTP_HOST);
+  if (transports.has(host)) return transports.get(host);
+  const port = Number(process.env.SMTP_PORT || 465);
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port !== 587,
+    // Hostname is still needed for TLS SNI and the server's certificate check.
+    servername: net.isIP(SMTP_HOST) ? undefined : SMTP_HOST,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
   });
+  transports.set(host, transporter);
   return transporter;
 }
 
 // Returns false (instead of throwing) when mail is unconfigured so callers
 // can fall back to dev-mode behaviour.
 async function sendMail({ to, subject, html }) {
-  const t = getTransporter();
+  const t = await getTransporter();
   if (!t) {
     lastMailResult = { ok: false, reason: "unconfigured", to, subject, at: new Date().toISOString() };
     console.log(`[mail:unconfigured] to=${to} subject="${subject}"`);
@@ -52,7 +87,7 @@ async function sendMail({ to, subject, html }) {
 }
 
 function getMailStatus() {
-  return { configured: !!getTransporter(), last: lastMailResult };
+  return { configured: isConfigured(), last: lastMailResult };
 }
 
 module.exports = { sendMail, getMailStatus };
