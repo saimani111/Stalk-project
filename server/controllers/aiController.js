@@ -38,27 +38,51 @@ function sanitizeMessages(messages) {
   return clean.length ? clean : null;
 }
 
-async function askOpenAI(systemPrompt, messages) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+// OpenAI-compatible chat endpoint (used by OpenAI and Groq).
+async function askOpenAICompatible({ label, url, key, model, systemPrompt, messages, maxTokens = 400 }) {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${key}`,
     },
     signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
-      max_tokens: 300,
+      max_tokens: maxTokens,
       temperature: 0.8,
     }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`OpenAI error ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`${label} error ${res.status}: ${text.slice(0, 200)}`);
   }
   const data = await res.json();
   return data.choices?.[0]?.message?.content;
+}
+
+function askOpenAI(systemPrompt, messages) {
+  return askOpenAICompatible({
+    label: "OpenAI",
+    url: "https://api.openai.com/v1/chat/completions",
+    key: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    systemPrompt,
+    messages,
+  });
+}
+
+// Groq free tier — standard API keys, fast Llama models, ₹0 cost.
+function askGroq(systemPrompt, messages) {
+  return askOpenAICompatible({
+    label: "Groq",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    key: process.env.GROQ_API_KEY,
+    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    systemPrompt,
+    messages,
+  });
 }
 
 // Google Gemini free tier — better quality than the no-key fallback, ₹0 cost.
@@ -111,10 +135,11 @@ async function askPollinations(systemPrompt, messages, maxTokens = 400) {
 }
 
 async function generate(messages, systemPrompt) {
-  // Preference order: free-tier Gemini first (₹0), paid OpenAI only as backup,
+  // Preference order: free-tier keys first (₹0), paid OpenAI only as backup,
   // no-key Pollinations as last resort.
   const chain = [];
   if (process.env.GEMINI_API_KEY) chain.push(["gemini", askGemini]);
+  if (process.env.GROQ_API_KEY) chain.push(["groq", askGroq]);
   if (process.env.OPENAI_API_KEY) chain.push(["openai", askOpenAI]);
   chain.push(["pollinations", askPollinations]);
 
@@ -141,7 +166,12 @@ async function refreshMemory(user, messages) {
       .slice(-8)
       .map((m) => `${m.role === "user" ? user.name : "Stuny"}: ${m.content}`)
       .join("\n");
-    const updated = await (process.env.GEMINI_API_KEY ? askGemini : askPollinations)(
+    const cheap = process.env.GROQ_API_KEY
+      ? askGroq
+      : process.env.GEMINI_API_KEY
+        ? askGemini
+        : askPollinations;
+    const updated = await cheap(
       MEMORY_PROMPT,
       [
         {
