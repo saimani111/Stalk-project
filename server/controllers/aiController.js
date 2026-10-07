@@ -134,6 +134,10 @@ async function askPollinations(systemPrompt, messages, maxTokens = 400) {
   return data.choices?.[0]?.message?.content ?? data.content;
 }
 
+// Kept for the /api/ai/status diagnostic: last fallback-chain failure
+// (provider name + error text; never key material).
+let lastProviderError = null;
+
 async function generate(messages, systemPrompt) {
   // Preference order: free-tier keys first (₹0), paid OpenAI only as backup,
   // no-key Pollinations as last resort.
@@ -147,9 +151,13 @@ async function generate(messages, systemPrompt) {
   for (const [name, fn] of chain) {
     try {
       const reply = await fn(systemPrompt, messages);
-      if (reply) return { reply, provider: name };
+      if (reply) {
+        if (name !== "pollinations") lastProviderError = null;
+        return { reply, provider: name };
+      }
     } catch (err) {
       lastErr = err;
+      lastProviderError = `${name}: ${err.message}`.slice(0, 300);
       console.warn(`${name} failed, trying next provider:`, err.message);
     }
   }
@@ -290,6 +298,7 @@ const aiStatus = (req, res) => {
     },
     smtp: !!process.env.SMTP_HOST,
     dailyLimit: DAILY_LIMIT,
+    lastProviderError,
   });
 };
 
