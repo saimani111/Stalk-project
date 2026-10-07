@@ -1,6 +1,9 @@
 const nodemailer = require("nodemailer");
 
 let transporter = null;
+// Outcome of the most recent send attempt, exposed via /api/ai/status so SMTP
+// health can be verified without dashboard log access.
+let lastMailResult = null;
 
 // Gmail: create an App Password at https://myaccount.google.com/apppasswords
 // then set SMTP_HOST=smtp.gmail.com SMTP_PORT=465 SMTP_USER=you@gmail.com SMTP_PASS=xxxx
@@ -22,17 +25,34 @@ function getTransporter() {
 async function sendMail({ to, subject, html }) {
   const t = getTransporter();
   if (!t) {
+    lastMailResult = { ok: false, reason: "unconfigured", to, subject, at: new Date().toISOString() };
     console.log(`[mail:unconfigured] to=${to} subject="${subject}"`);
     return false;
   }
-  await t.sendMail({
-    from: `"Stalk" <${process.env.SMTP_USER}>`,
-    to,
-    subject,
-    html,
-  });
-  console.log(`[mail:sent] to=${to} subject="${subject}"`);
-  return true;
+  try {
+    await t.sendMail({
+      from: `"Stalk" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    lastMailResult = { ok: true, to, subject, at: new Date().toISOString() };
+    console.log(`[mail:sent] to=${to} subject="${subject}"`);
+    return true;
+  } catch (err) {
+    lastMailResult = {
+      ok: false,
+      reason: err.message.slice(0, 300),
+      to,
+      subject,
+      at: new Date().toISOString(),
+    };
+    throw err;
+  }
 }
 
-module.exports = { sendMail };
+function getMailStatus() {
+  return { configured: !!getTransporter(), last: lastMailResult };
+}
+
+module.exports = { sendMail, getMailStatus };

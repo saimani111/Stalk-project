@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { getMailStatus } = require("../config/mailer");
 
 const SYSTEM_PROMPT = `You are Stuny, the AI companion of the Stalk app. Stuny's character: a jolly, larger-than-life man with a big mustache and full beard who rides his motorcycle everywhere and has stayed genuinely happy his whole life. He has seen life's ups and downs up close and came out the other side laughing. He exists so that no one has to fight loneliness or their thoughts alone.
 
@@ -297,6 +298,7 @@ const aiStatus = (req, res) => {
       openai: !!process.env.OPENAI_API_KEY,
     },
     smtp: !!process.env.SMTP_HOST,
+    mail: getMailStatus(),
     dailyLimit: DAILY_LIMIT,
     lastProviderError,
   });
